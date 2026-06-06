@@ -30,6 +30,8 @@ func runDump(configPath string) error {
 		cfg.DefaultExtension,
 		cfg.TitleTemplate,
 		cfg.TitleSubstitutions,
+		cfg.DisplayTemplate,
+		cfg.DisplaySubstitutions,
 	)
 
 	c := cache.NewCache()

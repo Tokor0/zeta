@@ -58,6 +58,8 @@ func (s *Server) initialize(
 		config.DefaultExtension,
 		config.TitleTemplate,
 		config.TitleSubstitutions,
+		config.DisplayTemplate,
+		config.DisplaySubstitutions,
 	)
 
 	// Cache File

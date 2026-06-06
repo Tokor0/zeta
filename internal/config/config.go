@@ -15,6 +15,13 @@ type Config struct {
 	TitleTemplate      string   `json:"title_template"`
 	TitleSubstitutions []string `json:"title_substitutions"`
 
+	// DisplayTemplate / DisplaySubstitutions build the text inserted into a
+	// link's display body on completion. This is kept separate from the title
+	// so classifiers (e.g. a `<Tool>` taxon used to disambiguate notes in the
+	// picker) can be dropped from the rendered link text.
+	DisplayTemplate      string   `json:"display_template"`
+	DisplaySubstitutions []string `json:"display_substitutions"`
+
 	// CompletionInsertDisplay controls whether accepting a link completion also
 	// fills the link's display body (e.g. `#link("id")[Title]`) when it is empty
 	// or absent. Existing non-empty bodies are never overwritten.
@@ -44,6 +51,8 @@ var defaultConfig = Config{
 	DefaultExtension:        ".typ",
 	TitleTemplate:           "%s %s %s",
 	TitleSubstitutions:      []string{"taxon", "title", "path"},
+	DisplayTemplate:         "%s",
+	DisplaySubstitutions:    []string{"title"},
 	CompletionInsertDisplay: true,
 	NewNoteIDScheme:         "random",
 	NewNoteTemplate:         "= %s\n",

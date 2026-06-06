@@ -22,13 +22,15 @@ type Note struct {
 }
 
 var (
-	configured         bool = false
-	root               string
-	selectRegex        *regexp.Regexp
-	fileExtenstions    []string
-	defaultExtension   string
-	titleTemplate      string
-	titleSubstitutions []string
+	configured           bool = false
+	root                 string
+	selectRegex          *regexp.Regexp
+	fileExtenstions      []string
+	defaultExtension     string
+	titleTemplate        string
+	titleSubstitutions   []string
+	displayTemplate      string
+	displaySubstitutions []string
 )
 
 func Configure(
@@ -38,6 +40,8 @@ func Configure(
 	configDefaultExtension string,
 	configTitleTemplate string,
 	configTitleSubstitutions []string,
+	configDisplayTemplate string,
+	configDisplaySubstitutions []string,
 ) error {
 	if configured {
 		panic("Resolver already configured.")
@@ -48,6 +52,8 @@ func Configure(
 	defaultExtension = configDefaultExtension
 	titleTemplate = configTitleTemplate
 	titleSubstitutions = configTitleSubstitutions
+	displayTemplate = configDisplayTemplate
+	displaySubstitutions = configDisplaySubstitutions
 
 	var err error
 	selectRegex, err = regexp.Compile(configSelectRegex)
@@ -91,6 +97,29 @@ func Title(path string, metadata map[string]string) string {
 	title := fmt.Sprintf(titleTemplate, args...)
 	title = strings.TrimSpace(title)
 	return title
+}
+
+// Display returns the human-facing text to insert into a link's display body.
+// Unlike Title it omits classifier captures (e.g. a taxon label), so a rendered
+// link reads "Typst" rather than "<Tool> Typst". It falls back to Title when no
+// display substitutions are present.
+func Display(path string, metadata map[string]string) string {
+	if len(metadata) == 0 || len(displaySubstitutions) == 0 {
+		return Title(path, metadata)
+	}
+	var args []any
+	for _, s := range displaySubstitutions {
+		if v, ok := metadata[s]; ok {
+			args = append(args, v)
+		} else {
+			args = append(args, "")
+		}
+	}
+	display := strings.TrimSpace(fmt.Sprintf(displayTemplate, args...))
+	if display == "" {
+		return Title(path, metadata)
+	}
+	return display
 }
 
 // DefinitionNode returns the captured node that best represents a note's
