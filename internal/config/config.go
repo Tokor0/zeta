@@ -22,6 +22,17 @@ type Config struct {
 	DisplayTemplate      string   `json:"display_template"`
 	DisplaySubstitutions []string `json:"display_substitutions"`
 
+	// SuggestLinksInText controls whether, while writing ordinary text, the
+	// server suggests turning the phrase being typed into a link to an existing
+	// note whose title it matches.
+	SuggestLinksInText bool `json:"suggest_links_in_text"`
+
+	// LinkSuggestThreshold is the minimum fuzzy-match closeness (0..1) between
+	// the typed phrase and a note title required to surface a prose link
+	// suggestion. A clean (possibly partial) prefix scores 1.0; typos lower the
+	// score. Raise it to reduce suggestions, lower it to allow looser matches.
+	LinkSuggestThreshold float64 `json:"link_suggest_threshold"`
+
 	// CompletionInsertDisplay controls whether accepting a link completion also
 	// fills the link's display body (e.g. `#link("id")[Title]`) when it is empty
 	// or absent. Existing non-empty bodies are never overwritten.
@@ -53,6 +64,8 @@ var defaultConfig = Config{
 	TitleSubstitutions:      []string{"taxon", "title", "path"},
 	DisplayTemplate:         "%s",
 	DisplaySubstitutions:    []string{"title"},
+	SuggestLinksInText:      true,
+	LinkSuggestThreshold:    0.7,
 	CompletionInsertDisplay: true,
 	NewNoteIDScheme:         "random",
 	NewNoteTemplate:         "= %s\n",
