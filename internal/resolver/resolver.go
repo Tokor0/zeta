@@ -57,6 +57,22 @@ func Configure(
 	return nil
 }
 
+// Root returns the configured workspace root directory.
+func Root() string {
+	return root
+}
+
+// Reference returns the string to write inside a link so that it resolves back
+// to the note at relativePath. The default extension is stripped (it is
+// re-appended during resolution), yielding clean targets like "sub/d654bf".
+func Reference(relativePath string) string {
+	ext := filepath.Ext(relativePath)
+	if ext == defaultExtension {
+		return strings.TrimSuffix(relativePath, ext)
+	}
+	return relativePath
+}
+
 func Title(path string, metadata map[string]string) string {
 	if len(metadata) == 0 {
 		return path
@@ -75,6 +91,35 @@ func Title(path string, metadata map[string]string) string {
 	title := fmt.Sprintf(titleTemplate, args...)
 	title = strings.TrimSpace(title)
 	return title
+}
+
+// DefinitionNode returns the captured node that best represents a note's
+// "definition": the earliest-positioned capture among the configured title
+// substitutions (typically the heading/title). It returns nil if the document
+// contains none of them, in which case callers fall back to the top of the
+// file.
+func DefinitionNode(namedNodes map[string][]*sitter.Node) *sitter.Node {
+	var best *sitter.Node
+	for _, key := range titleSubstitutions {
+		nodes := namedNodes[key]
+		if len(nodes) == 0 {
+			continue
+		}
+		n := nodes[0]
+		if best == nil || startsBefore(n, best) {
+			best = n
+		}
+	}
+	return best
+}
+
+// startsBefore reports whether node a starts earlier in the document than b.
+func startsBefore(a, b *sitter.Node) bool {
+	ap, bp := (*a).StartPoint(), (*b).StartPoint()
+	if ap.Row != bp.Row {
+		return ap.Row < bp.Row
+	}
+	return ap.Column < bp.Column
 }
 
 func Resolve(base any) (Note, error) {
@@ -140,6 +185,19 @@ func resolveAbsolute(absolutepath string) (Note, error) {
 		RelativePath: rel,
 		CachePath:    cachePath,
 	}, nil
+}
+
+// SelectReferenceRange returns the byte offsets, within a target node's
+// content, of the substring that select_regex treats as the reference (its
+// first submatch). For the default `^"(.*)"$` against `"abc"` it returns the
+// span of `abc` (offsets 1..4). ok is false when the content does not match,
+// e.g. while the user is still typing an unterminated string.
+func SelectReferenceRange(content string) (start int, end int, ok bool) {
+	loc := selectRegex.FindStringSubmatchIndex(content)
+	if loc == nil || len(loc) < 4 || loc[2] < 0 {
+		return 0, 0, false
+	}
+	return loc[2], loc[3], true
 }
 
 func ResolveReference(source Note, reference string) (Note, error) {

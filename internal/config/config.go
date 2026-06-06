@@ -14,16 +14,40 @@ type Config struct {
 	DefaultExtension   string   `json:"default_extension"`
 	TitleTemplate      string   `json:"title_template"`
 	TitleSubstitutions []string `json:"title_substitutions"`
+
+	// CompletionInsertDisplay controls whether accepting a link completion also
+	// fills the link's display body (e.g. `#link("id")[Title]`) when it is empty
+	// or absent. Existing non-empty bodies are never overwritten.
+	CompletionInsertDisplay bool `json:"completion_insert_display"`
+
+	// NewNoteIDScheme determines how the filename of a note created from a link
+	// is generated: "random" (opaque short id, the default), "timestamp", or
+	// "slug" (derived from the title). Ignored when NewNoteCommand is set.
+	NewNoteIDScheme string `json:"new_note_id_scheme"`
+
+	// NewNoteTemplate is the content written to a newly created note. A single
+	// %s is substituted with the note's title.
+	NewNoteTemplate string `json:"new_note_template"`
+
+	// NewNoteCommand, when non-empty, is an external command used to create a
+	// note instead of NewNoteTemplate. The placeholders {title}, {path}, {id}
+	// and {root} are substituted before execution; the command is responsible
+	// for writing the file at {path}.
+	NewNoteCommand string `json:"new_note_command"`
 }
 
 var defaultConfig = Config{
-	Query:              `(call item: (ident) @link (#eq? @link "link") (group (string) @target ))`,
-	SelectRegex:        `^"(.*)"$`,
-	Root:               ".",
-	FileExtensions:     []string{".typ"},
-	DefaultExtension:   ".typ",
-	TitleTemplate:      "%s %s %s",
-	TitleSubstitutions: []string{"taxon", "title", "path"},
+	Query:                   `(call item: (ident) @link (#eq? @link "link") (group (string) @target ))`,
+	SelectRegex:             `^"(.*)"$`,
+	Root:                    ".",
+	FileExtensions:          []string{".typ"},
+	DefaultExtension:        ".typ",
+	TitleTemplate:           "%s %s %s",
+	TitleSubstitutions:      []string{"taxon", "title", "path"},
+	CompletionInsertDisplay: true,
+	NewNoteIDScheme:         "random",
+	NewNoteTemplate:         "= %s\n",
+	NewNoteCommand:          "",
 }
 
 func Load(v any) (Config, error) {

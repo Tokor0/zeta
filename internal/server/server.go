@@ -4,6 +4,7 @@ import (
 	"zeta/internal/cache"
 	"zeta/internal/config"
 	"zeta/internal/manager"
+	"zeta/internal/parser"
 
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	"github.com/tliron/glsp/server"
@@ -15,6 +16,15 @@ type Server struct {
 	manager   *manager.DocumentManager
 	graphAddr string
 	config    config.Config
+
+	// parsers is a shared pool used for one-shot parsing of notes that are
+	// not currently open (e.g. resolving a goto-definition target's title).
+	parsers *parser.ParserPool
+
+	// supportsShowDocument records whether the client advertised the
+	// `window/showDocument` capability during initialize. It gates the
+	// optional graph feature, which has no spec-compliant fallback.
+	supportsShowDocument bool
 }
 
 func NewServer() (*server.Server, error) {
@@ -28,6 +38,8 @@ func NewServer() (*server.Server, error) {
 		TextDocumentDidClose:    ls.textDocumentDidClose,
 		TextDocumentDefinition:  ls.textDocumentDefinition,
 		TextDocumentReferences:  ls.textDocumentReferences,
+		TextDocumentCompletion:  ls.textDocumentCompletion,
+		TextDocumentCodeAction:  ls.textDocumentCodeAction,
 		WorkspaceExecuteCommand: ls.workspaceExecuteCommand,
 		WorkspaceSymbol:         ls.workspaceSymbol,
 		Shutdown:                ls.shutdown,
